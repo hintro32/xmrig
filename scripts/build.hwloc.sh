@@ -13,7 +13,7 @@ tar -xzf hwloc-${HWLOC_VERSION}.tar.gz
 
 cd hwloc-${HWLOC_VERSION}
 ./configure --disable-shared --enable-static --disable-io --disable-libudev --disable-libxml2
-make -j$(nproc || sysctl -n hw.ncpu || sysctl -n hw.logicalcpu)
+make -j
 cp -fr include ../../deps
 cp hwloc/.libs/libhwloc.a ../../deps/lib
 cd ..
