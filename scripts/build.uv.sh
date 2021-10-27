@@ -14,7 +14,7 @@ tar -xzf v${UV_VERSION}.tar.gz
 cd libuv-${UV_VERSION}
 sh autogen.sh
 ./configure --disable-shared
-make -j$(nproc || sysctl -n hw.ncpu || sysctl -n hw.logicalcpu)
+make -j
 cp -fr include ../../deps
 cp .libs/libuv.a ../../deps/lib
 cd ..
