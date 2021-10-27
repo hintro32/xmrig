@@ -83,12 +83,14 @@ if (WITH_RANDOMX)
         list(APPEND SOURCES_CRYPTO src/crypto/randomx/blake2/blake2b_sse41.c)
 
         if (CMAKE_C_COMPILER_ID MATCHES GNU OR CMAKE_C_COMPILER_ID MATCHES Clang)
-            set_source_files_properties(src/crypto/randomx/blake2/blake2b_sse41.c PROPERTIES COMPILE_FLAGS "-msse4.1;-mtune=znver2")
+            set_source_files_properties(src/crypto/randomx/blake2/blake2b_sse41.c PROPERTIES COMPILE_FLAGS -msse4.1)
+	    set_source_files_properties(src/crypto/randomx/blake2/blake2b_sse41.c PROPERTIES COMPILE_FLAGS -mtune=znver2)
         endif()
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
-        set_source_files_properties(src/crypto/randomx/jit_compiler_x86.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-const-variable;-mtune=znver2")
+        set_source_files_properties(src/crypto/randomx/jit_compiler_x86.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-const-variable)
+	set_source_files_properties(src/crypto/randomx/jit_compiler_x86.cpp PROPERTIES COMPILE_FLAGS -mtune=znver2)
     endif()
 
     if (WITH_HWLOC)
