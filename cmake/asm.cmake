@@ -30,7 +30,6 @@ if (WITH_ASM AND NOT XMRIG_ARM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
                 "src/crypto/cn/asm/cn_main_loop.S"
                 "src/crypto/cn/asm/CryptonightR_template.S"
             )
-            set_source_files_properties(${XMRIG_ASM_FILES} PROPERTIES COMPILE_FLAGS -mtune=znver2)
         endif()
 
         set_property(SOURCE ${XMRIG_ASM_FILES} PROPERTY C)
