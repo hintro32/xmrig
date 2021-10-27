@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 2.8.12)
 project(xmrig)
 
-cmake_policy(SET CMP0069 NEW)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.9)
+  cmake_policy(SET CMP0069 NEW)
+endif()
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 
 option(WITH_HWLOC           "Enable hwloc support" ON)
