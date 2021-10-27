@@ -75,10 +75,10 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
 elseif (CMAKE_CXX_COMPILER_ID MATCHES Clang)
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Ofast -fno-align-functions -fno-align-loops -funroll-loops -fmerge-all-constants -mbmi -mlzcnt")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Ofast -falign-functions=16 -falign-loops=16 -funroll-loops -fmerge-all-constants -mbmi -mlzcnt")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fexceptions -fno-rtti -Wno-missing-braces")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast -fno-align-functions -fno-align-loops -funroll-loops -fmerge-all-constants -mbmi -mlzcnt")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast -falign-functions=16 -falign-loops=16 -funroll-loops -fmerge-all-constants -mbmi -mlzcnt")
 
     if (ARM_TARGET EQUAL 8)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ARM8_CXX_FLAGS}")
