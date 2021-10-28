@@ -27,7 +27,7 @@ if (WITH_ASTROBWT)
 
             if (CMAKE_C_COMPILER_ID MATCHES GNU OR CMAKE_C_COMPILER_ID MATCHES Clang)
                 set_source_files_properties(src/crypto/astrobwt/xmm6int/salsa20_xmm6int-avx2.c PROPERTIES COMPILE_OPTIONS "-mavx2;-mtune=generic")
-                set_source_files_properties("src/crypto/astrobwt/salsa20_ref/salsa20.c src/crypto/astrobwt/Salsa20.cpp" PROPERTIES COMPILE_OPTIONS -mtune=generic)
+                set_source_files_properties("src/crypto/astrobwt/salsa20_ref/salsa20.c src/crypto/astrobwt/Salsa20.cpp src/crypto/astrobwt/sha3_256_avx2.S" PROPERTIES COMPILE_OPTIONS -mtune=generic)
             endif()
 
             if (CMAKE_C_COMPILER_ID MATCHES MSVC)
