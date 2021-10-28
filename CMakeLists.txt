@@ -196,12 +196,15 @@ find_package(UV REQUIRED)
 
 include(cmake/flags.cmake)
 include(cmake/randomx.cmake)
-include(cmake/argon2.cmake)
-include(cmake/astrobwt.cmake)
 include(cmake/kawpow.cmake)
 include(cmake/OpenSSL.cmake)
 include(cmake/asm.cmake)
 include(cmake/cn-gpu.cmake)
+
+set_source_files_properties(${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS -mtune=znver2)
+
+include(cmake/argon2.cmake)
+include(cmake/astrobwt.cmake)
 
 if (WITH_CN_LITE)
     add_definitions(/DXMRIG_ALGO_CN_LITE)
