@@ -33,6 +33,9 @@ if (WITH_ASM AND NOT XMRIG_ARM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         endif()
 
         set_property(SOURCE ${XMRIG_ASM_FILES} PROPERTY C)
+        set_source_files_properties(src/crypto/common/Assembly.h
+        src/crypto/common/Assembly.cpp PROPERTIES COMPILE_OPTIONS -march=znver2)
+        set_source_files_properties(src/crypto/cn/r/CryptonightR_gen.cpp COMPILE_OPTIONS "-mtune=znver2;-mssse3" )
     endif()
 
     add_library(${XMRIG_ASM_LIBRARY} STATIC ${XMRIG_ASM_FILES})
