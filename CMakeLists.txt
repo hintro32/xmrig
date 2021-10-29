@@ -204,7 +204,7 @@ include(cmake/cn-gpu.cmake)
 
 set_source_files_properties(${HEADERS} ${SOURCES} ${SOURCES_SYSLOG} ${TLS_SOURCES} PROPERTIES COMPILE_OPTIONS -march=native)
 
-set_source_files_properties(${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS "-mtune=native;-mssse3")
+set_source_files_properties(${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS "-march=skylake;-mtune=native;")
 
 include(cmake/argon2.cmake)
 include(cmake/astrobwt.cmake)
