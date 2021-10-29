@@ -4,8 +4,8 @@ project(xmrig)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.9)
   cmake_policy(SET CMP0069 NEW)
 #  set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
 
 option(WITH_HWLOC           "Enable hwloc support" ON)
@@ -202,9 +202,9 @@ include(cmake/OpenSSL.cmake)
 include(cmake/asm.cmake)
 include(cmake/cn-gpu.cmake)
 
-set_source_files_properties(${HEADERS} ${SOURCES} ${SOURCES_SYSLOG} ${TLS_SOURCES} PROPERTIES COMPILE_OPTIONS -march=znver2)
+set_source_files_properties(${HEADERS} ${SOURCES} ${SOURCES_SYSLOG} ${TLS_SOURCES} PROPERTIES COMPILE_OPTIONS -march=native)
 
-set_source_files_properties(${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS "-mtune=znver2;-mssse3")
+set_source_files_properties(${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS "-mtune=native;-mssse3")
 
 include(cmake/argon2.cmake)
 include(cmake/astrobwt.cmake)
