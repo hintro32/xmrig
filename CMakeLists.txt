@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(xmrig)
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.9)
-  cmake_policy(SET CMP0069 NEW)
-#  set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
-endif()
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
 
 option(WITH_HWLOC           "Enable hwloc support" ON)
 option(WITH_CN_LITE         "Enable CryptoNight-Lite algorithms family" ON)
