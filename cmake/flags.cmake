@@ -16,10 +16,10 @@ endif()
 include(CheckSymbolExists)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-strict-aliasing -march=znver2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-strict-aliasing -mbmi -mlzcnt -mmovbe -mbmi2 -mtune=znver2")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Ofast")
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fexceptions -fno-rtti -Wno-strict-aliasing -Wno-class-memaccess -march=znver2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fexceptions -fno-rtti -Wno-strict-aliasing -Wno-class-memaccess -mbmi -mlzcnt -mmovbe -mbmi2 -mtune=znver2")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast -s")
 
     if (ARM_TARGET EQUAL 8)
