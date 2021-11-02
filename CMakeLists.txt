@@ -196,13 +196,13 @@ include(cmake/kawpow.cmake)
 include(cmake/OpenSSL.cmake)
 include(cmake/asm.cmake)
 include(cmake/cn-gpu.cmake)
+include(cmake/astrobwt.cmake)
 
 set_source_files_properties(${HEADERS} ${SOURCES} ${SOURCES_SYSLOG} ${TLS_SOURCES} PROPERTIES COMPILE_OPTIONS -march=znver2)
 
 set_source_files_properties(${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS "-mtune=znver2;-mssse3")
 
 include(cmake/argon2.cmake)
-include(cmake/astrobwt.cmake)
 
 if (WITH_CN_LITE)
     add_definitions(/DXMRIG_ALGO_CN_LITE)
