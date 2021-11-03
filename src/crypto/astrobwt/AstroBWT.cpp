@@ -86,6 +86,12 @@ static void Salsa20_XORKeyStream_AVX256(const void* key, void* output, size_t si
 }
 #endif
 
+template <class T>
+__attribute__((always_inline)) inline T& forceRegister(const T &value) {
+    asm volatile("" : "+r"(const_cast<T&>(value)));
+    return const_cast<T&>(value);
+}
+
 static inline bool smaller(const uint8_t* v, uint64_t a, uint64_t b)
 {
 	const uint64_t value_a = a >> 21;
@@ -212,16 +218,13 @@ void sort_indices(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp
 
 void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp_indices)
 {
-	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS];
-	// std::fill(counters, counters+ COUNTING_SORT_SIZE/2, 0);
-	memset(counters, 0, sizeof(uint16_t)*COUNTING_SORT_SIZE);
-	uint16_t * const counters_ = reinterpret_cast<uint16_t*>(counters);
+	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS] = {};
 	alignas(16) uint32_t counters2[1 << COUNTING_SORT_BITS];
 
 	{
 #define ITER(X) { \
 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i + X)); \
-			++counters_[k >> (64 - COUNTING_SORT_BITS)]; \
+			++counters[k >> (64 - COUNTING_SORT_BITS)]; \
 		}
 
 		uint32_t i = 0;
@@ -243,7 +246,8 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 	for (uint32_t i = 0; i < (1 << COUNTING_SORT_BITS); i += 16)
 	{
 #define ITER(X) { \
-			const uint32_t cur = counters_[i + X] + prev; \
+			const uint32_t cur = forceRegister(counters[i + X]) + prev; \
+			counters[i + X] = cur; \
 			counters2[i + X] = cur; \
 			prev = cur; \
 		}
@@ -251,9 +255,6 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 		ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
 #undef ITER
 	}
-
-    // std::copy(counters2, counters2+COUNTING_SORT_SIZE, counters);
-	memcpy(counters, counters2, sizeof(uint32_t)*COUNTING_SORT_SIZE);
 
 	{
 #define ITER(X) \
