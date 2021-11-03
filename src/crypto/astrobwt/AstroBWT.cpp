@@ -246,16 +246,18 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 	for (uint32_t i = 0; i < (1 << COUNTING_SORT_BITS); i += 16)
 	{
 #define ITER(X) { \
-			const uint32_t cur = forceRegister(counters[i + X]) + prev; \
-			counters[i + X] = cur; \
-			prev = cur; \
+			prev += forceRegister(counters[i + X]); \
+			counters[i + X] = prev; \
+			counters2[i + X] = prev; \
 		}
 		ITER(0); ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7);
 		ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
 #undef ITER
 	}
 
-	__builtin_memcpy_inline(counters2, counters, sizeof(uint32_t)*COUNTING_SORT_SIZE);
+	// __builtin_memcpy_inline(counters2, counters, sizeof(uint32_t)*COUNTING_SORT_SIZE);
+
+	// std::copy(counters, counters+COUNTING_SORT_SIZE, counters2);
 
 	{
 #define ITER(X) \
