@@ -199,7 +199,7 @@ include(cmake/cn-gpu.cmake)
 
 set_source_files_properties(${HEADERS} ${SOURCES} ${SOURCES_SYSLOG} ${TLS_SOURCES} PROPERTIES COMPILE_OPTIONS -march=znver2)
 
-set_source_files_properties(${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS "-mtune=znver2;-mssse3;-mbmi;-mlzcnt;-mmovbe;-mbmi2")
+#set_source_files_properties(${SOURCES_OS} ${HEADERS_CRYPTO} ${SOURCES_CRYPTO} PROPERTIES COMPILE_OPTIONS "-mtune=znver2;-mssse3;-mlzcnt;-mmovbe;-mbmi;-mbmi2")
 
 include(cmake/astrobwt.cmake)
 include(cmake/argon2.cmake)
