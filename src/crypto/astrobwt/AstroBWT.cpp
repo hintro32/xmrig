@@ -212,13 +212,15 @@ void sort_indices(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp
 
 void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp_indices)
 {
-	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS] = {};
+	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS];
+	std::fill(counters, counters+ COUNTING_SORT_SIZE/2, 0);
+	uint16_t * const counters_ = reinterpret_cast<uint16_t*>(counters);
 	alignas(16) uint32_t counters2[1 << COUNTING_SORT_BITS];
 
 	{
 #define ITER(X) { \
 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i + X)); \
-			++counters[k >> (64 - COUNTING_SORT_BITS)]; \
+			++counters_[k >> (64 - COUNTING_SORT_BITS)]; \
 		}
 
 		uint32_t i = 0;
@@ -240,8 +242,7 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 	for (uint32_t i = 0; i < (1 << COUNTING_SORT_BITS); i += 16)
 	{
 #define ITER(X) { \
-			const uint32_t cur = counters[i + X] + prev; \
-			counters[i + X] = cur; \
+			const uint32_t cur = counters_[i + X] + prev; \
 			counters2[i + X] = cur; \
 			prev = cur; \
 		}
@@ -249,6 +250,8 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 		ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
 #undef ITER
 	}
+
+    std::copy(counters2, counters2+COUNTING_SORT_SIZE, counters);
 
 	{
 #define ITER(X) \
