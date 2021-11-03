@@ -46,6 +46,26 @@ extern "C"
 __attribute__((ms_abi))
 #endif
 void SHA3_256_AVX2_ASM(const void* in, size_t inBytes, void* out);
+
+static INLINE void memcpy_avx_256(void *dst, const void *src) {
+	__m256i m0 = _mm256_loadu_si256(((const __m256i*)src) + 0);
+	__m256i m1 = _mm256_loadu_si256(((const __m256i*)src) + 1);
+	__m256i m2 = _mm256_loadu_si256(((const __m256i*)src) + 2);
+	__m256i m3 = _mm256_loadu_si256(((const __m256i*)src) + 3);
+	__m256i m4 = _mm256_loadu_si256(((const __m256i*)src) + 4);
+	__m256i m5 = _mm256_loadu_si256(((const __m256i*)src) + 5);
+	__m256i m6 = _mm256_loadu_si256(((const __m256i*)src) + 6);
+	__m256i m7 = _mm256_loadu_si256(((const __m256i*)src) + 7);
+	_mm256_storeu_si256(((__m256i*)dst) + 0, m0);
+	_mm256_storeu_si256(((__m256i*)dst) + 1, m1);
+	_mm256_storeu_si256(((__m256i*)dst) + 2, m2);
+	_mm256_storeu_si256(((__m256i*)dst) + 3, m3);
+	_mm256_storeu_si256(((__m256i*)dst) + 4, m4);
+	_mm256_storeu_si256(((__m256i*)dst) + 5, m5);
+	_mm256_storeu_si256(((__m256i*)dst) + 6, m6);
+	_mm256_storeu_si256(((__m256i*)dst) + 7, m7);
+}
+
 #endif
 
 #ifdef XMRIG_ARM
@@ -254,11 +274,15 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 #undef ITER
 	}
 
+	// std::copy(counters, counters+COUNTING_SORT_SIZE, counters2);
+#ifdef ASTROBWT_AVX2
+	for (int i = 0; i < COUNTING_SORT_SIZE; i+=64)
+		memcpy_avx_256(counters2, counters);
+#else
 	std::copy(counters, counters+COUNTING_SORT_SIZE, counters2);
+#endif
 
 	// __builtin_memcpy_inline(counters2, counters, sizeof(uint32_t)*COUNTING_SORT_SIZE);
-
-	// std::copy(counters, counters+COUNTING_SORT_SIZE, counters2);
 
 	{
 #define ITER(X) \
