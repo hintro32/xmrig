@@ -273,7 +273,7 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 			ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7); ITER(8);
 		}
 		for (i=N&7; forceRegister(i) > 0; --i) {
-			ITER(8);
+			ITER(9);
 		}
 
 #undef ITER
