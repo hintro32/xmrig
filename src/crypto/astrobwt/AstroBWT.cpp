@@ -246,9 +246,9 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 	for (uint32_t i = 0; i < (1 << COUNTING_SORT_BITS); i += 16)
 	{
 #define ITER(X) { \
-			prev += forceRegister(counters[i + X]); \
-			counters[i + X] = prev; \
-			counters2[i + X] = prev; \
+			uint32_t cur; prev += counters[i + X]; \
+			forceRegister(cur = prev); \
+			counters[i + X]= cur; \
 		}
 		ITER(0); ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7);
 		ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
