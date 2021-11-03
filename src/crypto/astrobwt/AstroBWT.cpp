@@ -213,7 +213,8 @@ void sort_indices(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp
 void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp_indices)
 {
 	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS];
-	std::fill(counters, counters+ COUNTING_SORT_SIZE/2, 0);
+	// std::fill(counters, counters+ COUNTING_SORT_SIZE/2, 0);
+	memset(counters, 0, sizeof(uint16_t)*COUNTING_SORT_SIZE);
 	uint16_t * const counters_ = reinterpret_cast<uint16_t*>(counters);
 	alignas(16) uint32_t counters2[1 << COUNTING_SORT_BITS];
 
@@ -251,7 +252,8 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 #undef ITER
 	}
 
-    std::copy(counters2, counters2+COUNTING_SORT_SIZE, counters);
+    // std::copy(counters2, counters2+COUNTING_SORT_SIZE, counters);
+	memcpy(counters, counters2, sizeof(uint32_t)*COUNTING_SORT_SIZE);
 
 	{
 #define ITER(X) \
