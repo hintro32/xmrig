@@ -218,8 +218,8 @@ void sort_indices(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp
 
 void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp_indices)
 {
-	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS] = {};
-	alignas(16) uint32_t counters2[1 << COUNTING_SORT_BITS];
+	alignas(32) uint32_t counters[1 << COUNTING_SORT_BITS] = {};
+	alignas(32) uint32_t counters2[1 << COUNTING_SORT_BITS];
 
 	{
 #define ITER(X) { \
