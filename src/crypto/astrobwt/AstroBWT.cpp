@@ -263,21 +263,39 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 	{
 #define ITER(X) \
 		do { \
-			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v+8 + (i - X))); \
+			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + (i - X))); \
 			indices[counters[k >> (64 - COUNTING_SORT_BITS)]--] = (k & (static_cast<uint64_t>(-1) << 21)) | (i - X); \
 		} while (0)
 
-		int64_t i = N-8;
-        // const auto v8 = forceRegister(v+8);
-		for (; forceRegister(i) >= 0; i -= 8) {
+		uint32_t i = N;
+		for (; i >= 8; i -= 8) {
 			ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7); ITER(8);
 		}
-		for (i=N&7; forceRegister(i) > 0; --i) {
-			ITER(9);
+		for (; i > 0; --i) {
+			ITER(1);
 		}
 
 #undef ITER
 	}
+
+// 	{
+// #define ITER(X) \
+// 		do { \
+// 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v+8 + (i - X))); \
+// 			indices[counters[k >> (64 - COUNTING_SORT_BITS)]--] = (k & (static_cast<uint64_t>(-1) << 21)) | (i - X); \
+// 		} while (0)
+
+// 		int64_t i = N-8;
+//         // const auto v8 = forceRegister(v+8);
+// 		for (; forceRegister(i) >= 0; i -= 8) {
+// 			ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7); ITER(8);
+// 		}
+// 		for (i=N&7; forceRegister(i) > 0; --i) {
+// 			ITER(9);
+// 		}
+
+// #undef ITER
+// 	}
 
 	uint32_t prev_i = 0;
 	for (uint32_t i0 = 0; i0 < (1 << COUNTING_SORT_BITS); ++i0) {
