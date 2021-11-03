@@ -248,13 +248,14 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 #define ITER(X) { \
 			const uint32_t cur = forceRegister(counters[i + X]) + prev; \
 			counters[i + X] = cur; \
-			counters2[i + X] = cur; \
 			prev = cur; \
 		}
 		ITER(0); ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7);
 		ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
 #undef ITER
 	}
+
+	std::copy(counters, counters+COUNTING_SORT_SIZE, counters2);
 
 	{
 #define ITER(X) \
