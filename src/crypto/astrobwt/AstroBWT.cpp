@@ -47,25 +47,6 @@ __attribute__((ms_abi))
 #endif
 void SHA3_256_AVX2_ASM(const void* in, size_t inBytes, void* out);
 
-// static INLINE void memcpy_avx_256(void *dst, const void *src) {
-// 	__m256i m0 = _mm256_loadu_si256(((const __m256i*)src) + 0);
-// 	__m256i m1 = _mm256_loadu_si256(((const __m256i*)src) + 1);
-// 	__m256i m2 = _mm256_loadu_si256(((const __m256i*)src) + 2);
-// 	__m256i m3 = _mm256_loadu_si256(((const __m256i*)src) + 3);
-// 	__m256i m4 = _mm256_loadu_si256(((const __m256i*)src) + 4);
-// 	__m256i m5 = _mm256_loadu_si256(((const __m256i*)src) + 5);
-// 	__m256i m6 = _mm256_loadu_si256(((const __m256i*)src) + 6);
-// 	__m256i m7 = _mm256_loadu_si256(((const __m256i*)src) + 7);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 0, m0);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 1, m1);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 2, m2);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 3, m3);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 4, m4);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 5, m5);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 6, m6);
-// 	_mm256_storeu_si256(((__m256i*)dst) + 7, m7);
-// }
-
 #endif
 
 #ifdef XMRIG_ARM
@@ -132,8 +113,8 @@ static inline bool smaller(const uint8_t* v, uint64_t a, uint64_t b)
 		return false;
 	}
 
-	const uint64_t data_a = bswap_64(*reinterpret_cast<const uint64_t*>(v + a + 5));
-	const uint64_t data_b = bswap_64(*reinterpret_cast<const uint64_t*>(v + b + 5));
+	const uint64_t data_a = bswap_64(*reinterpret_cast<const uint64_t*>(v + a));
+	const uint64_t data_b = bswap_64(*reinterpret_cast<const uint64_t*>(v + b));
 	return (data_a < data_b);
 }
 
@@ -238,8 +219,8 @@ void sort_indices(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp
 
 void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp_indices)
 {
-	alignas(32) uint32_t counters[1 << COUNTING_SORT_BITS] = {};
-	alignas(32) uint32_t counters2[1 << COUNTING_SORT_BITS];
+	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS] = {};
+	alignas(16) uint32_t counters2[1 << COUNTING_SORT_BITS];
 
 	{
 #define ITER(X) { \
@@ -263,14 +244,14 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 	}
 
 	uint32_t prev = static_cast<uint32_t>(-1);
-	for (uint32_t i = 0; i < (1 << COUNTING_SORT_BITS); i += 16)
+	for (uint32_t i = 0; i < (1 << COUNTING_SORT_BITS); i += 8)
 	{
 #define ITER(X) { \
 			uint32_t cur; prev += counters[i + X]; \
 			counters[i + X] = forceRegister(cur = prev); \
 		}
 		ITER(0); ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7);
-		ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
+		//ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
 #undef ITER
 	}
 
@@ -298,25 +279,6 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 // #undef ITER
 // 	}
 
-// 	{
-// #define ITER(X) \
-// 		do { \
-// 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v+8 + (i - X))); \
-// 			indices[counters[k >> (64 - COUNTING_SORT_BITS)]--] = (k & (static_cast<uint64_t>(-1) << 21)) | (i - X); \
-// 		} while (0)
-
-// 		int64_t i = N-8;
-//         // const auto v8 = forceRegister(v+8);
-// 		for (; forceRegister(i) >= 0; i -= 8) {
-// 			ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7); ITER(8);
-// 		}
-// 		for (i=N&7; forceRegister(i) > 0; --i) {
-// 			ITER(9);
-// 		}
-
-// #undef ITER
-// 	}
-
 	{
 #define ITER(X) \
 		do { \
@@ -330,12 +292,13 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 			ITER(-7); ITER(-6); ITER(-5); ITER(-4); ITER(-3); ITER(-2); ITER(-1); ITER(0);
 		}
 		for (i=N&7; forceRegister(i) > 0; --i) {
-			ITER(-7);
+			ITER(1);
 		}
 
 #undef ITER
 	}
 
+	v += 5;
 	uint32_t prev_i = 0;
 	for (uint32_t i0 = 0; i0 < (1 << COUNTING_SORT_BITS); ++i0) {
 		const uint32_t i = counters2[i0] + 1;
@@ -360,17 +323,16 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 #undef ITER
 
 			uint32_t prev = static_cast<uint32_t>(-1);
-			for (uint32_t j = 0; j < (1 << COUNTING_SORT_BITS); j += 32)
+			for (uint32_t j = 0; j < (1 << COUNTING_SORT_BITS); j += 8)
 			{
 #define ITER(X) { \
-					const uint32_t cur = counters[j + X] + prev; \
-					counters[j + X] = cur; \
-					prev = cur; \
+					uint32_t cur; prev += counters[j + X]; \
+			        	counters[j + X] = (cur = prev); \
 				}
 				ITER(0); ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7);
-				ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
-				ITER(16); ITER(17); ITER(18); ITER(19); ITER(20); ITER(21); ITER(22); ITER(23);
-				ITER(24); ITER(25); ITER(26); ITER(27); ITER(28); ITER(29); ITER(30); ITER(31);
+				//ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
+				//ITER(16); ITER(17); ITER(18); ITER(19); ITER(20); ITER(21); ITER(22); ITER(23);
+				//ITER(24); ITER(25); ITER(26); ITER(27); ITER(28); ITER(29); ITER(30); ITER(31);
 #undef ITER
 			}
 
