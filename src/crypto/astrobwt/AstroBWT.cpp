@@ -222,62 +222,11 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 	alignas(16) uint32_t counters[1 << COUNTING_SORT_BITS] = {};
 	alignas(16) uint32_t counters2[1 << COUNTING_SORT_BITS];
 
-// 	{
-// #define ITER(X) { \
-// 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i + X)); \
-// 			++counters[k >> (64 - COUNTING_SORT_BITS)]; \
-// 		}
-
-// 		uint32_t i = 0;
-// 		const uint32_t n = (N / 32) * 32;
-// 		for (; i < n; i += 32) {
-// 			ITER(0); ITER(1); ITER(2); ITER(3); ITER(4); ITER(5); ITER(6); ITER(7);
-// 			ITER(8); ITER(9); ITER(10); ITER(11); ITER(12); ITER(13); ITER(14); ITER(15);
-// 			ITER(16); ITER(17); ITER(18); ITER(19); ITER(20); ITER(21); ITER(22); ITER(23);
-// 			ITER(24); ITER(25); ITER(26); ITER(27); ITER(28); ITER(29); ITER(30); ITER(31);
-// 		}
-// 		for (; i < N; ++i) {
-// 			ITER(0);
-// 		}
-
-// #undef ITER
-// 	}
-
-// 	{
-// #define ITER(X) { \
-// 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i + X)); \
-// 			++counters[(uint32_t) k >> (32 - COUNTING_SORT_BITS)]; \
-// 			++counters[(uint32_t) (k>>8) >> (32 - COUNTING_SORT_BITS)]; \
-// 			++counters[(uint32_t) (k>>16) >> (32 - COUNTING_SORT_BITS)]; \
-// 			++counters[(uint32_t) (k>>24) >> (32 - COUNTING_SORT_BITS)]; \
-// 			++counters[k>> (64 - COUNTING_SORT_BITS)]; \
-// 		}
-
-// 		uint32_t i = 4;
-// 		// const uint32_t n = N;
-// 		for (; i < N; i += 5) {
-// 			ITER(0); 
-// 		}
-		
-// 		do {
-// 			if (i == N+4) break;
-// 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i));
-// 			++counters[(uint32_t) k >> (32 - COUNTING_SORT_BITS)];
-// 			if (i+1 == N+4) break;
-// 			++counters[(uint32_t) (k>>8) >> (32 - COUNTING_SORT_BITS)];
-// 			if (i+2 == N+4) break;
-// 			++counters[(uint32_t) (k>>16) >> (32 - COUNTING_SORT_BITS)];
-// 			if (i+3 == N+4) break;
-// 			++counters[(uint32_t) (k>>24) >> (32 - COUNTING_SORT_BITS)];
-// 		} while (0);
-// #undef ITER
-// 	}
-
 	{
 #define ITER(X) { \
 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i + X)); \
-			++counters[k >> (64 - COUNTING_SORT_BITS)]; \
 			++counters[k << 8 >> (64 - COUNTING_SORT_BITS)]; \
+            ++counters[k >> (64 - COUNTING_SORT_BITS)]; \
 			++counters[k << 16>> (64 - COUNTING_SORT_BITS)]; \
 			++counters[k << 24>> (64 - COUNTING_SORT_BITS)]; \
 			++counters[(uint32_t) k >> (32 - COUNTING_SORT_BITS)]; \
