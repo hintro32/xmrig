@@ -226,8 +226,8 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 #define ITER(X) { \
 			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i + X)); \
 			++counters[k << 8 >> (64 - COUNTING_SORT_BITS)]; \
-            ++counters[k >> (64 - COUNTING_SORT_BITS)]; \
-			++counters[k << 16>> (64 - COUNTING_SORT_BITS)]; \
+            ++counters[k << 16>> (64 - COUNTING_SORT_BITS)]; \
+			++counters[k >> (64 - COUNTING_SORT_BITS)]; \
 			++counters[k << 24>> (64 - COUNTING_SORT_BITS)]; \
 			++counters[(uint32_t) k >> (32 - COUNTING_SORT_BITS)]; \
 		}
