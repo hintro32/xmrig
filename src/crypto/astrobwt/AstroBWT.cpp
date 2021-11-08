@@ -113,8 +113,8 @@ static inline bool smaller(const uint8_t* v, uint64_t a, uint64_t b)
 		return false;
 	}
 
-	const uint64_t data_a = bswap_64(*reinterpret_cast<const uint64_t*>(v + a));
-	const uint64_t data_b = bswap_64(*reinterpret_cast<const uint64_t*>(v + b));
+	const uint64_t data_a = bswap_64(*reinterpret_cast<const uint64_t*>(v + a + 5));
+	const uint64_t data_b = bswap_64(*reinterpret_cast<const uint64_t*>(v + b + 5));
 	return (data_a < data_b);
 }
 
@@ -224,31 +224,31 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 
 	{
 #define ITER(X) { \
-			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i + X)); \
 			++counters[k << 8 >> (64 - COUNTING_SORT_BITS)]; \
             ++counters[k << 16>> (64 - COUNTING_SORT_BITS)]; \
-			++counters[k >> (64 - COUNTING_SORT_BITS)]; \
 			++counters[k << 24>> (64 - COUNTING_SORT_BITS)]; \
 			++counters[(uint32_t) k >> (32 - COUNTING_SORT_BITS)]; \
+            ++counters[k << 40>> (64 - COUNTING_SORT_BITS)]; \
+            ++counters[k >> (64 - COUNTING_SORT_BITS)]; \
 		}
 
 		uint32_t i = 0;
-		const uint32_t n = N-4;
-		for (; i < n; i += 5) {
+		const uint32_t n = N-5;
+        uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v));
+		for (; i < n; i += 6, k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i))) {
 			ITER(0); 
 		}
-		
-		do {
-			if (i == N) break;
-			const uint64_t k = bswap_64(*reinterpret_cast<const uint64_t*>(v + i));
-			++counters[k >> (64 - COUNTING_SORT_BITS)];
-			if (i+1 == N) break;
-			++counters[k << 8 >> (64 - COUNTING_SORT_BITS)];
-			if (i+2 == N) break;
-			++counters[k << 16 >> (64 - COUNTING_SORT_BITS)];
-			if (i+3 == N) break;
-			++counters[k << 24 >> (64 - COUNTING_SORT_BITS)];
-		} while (0);
+
+        switch (N-i)
+		{
+		case 5: ++counters[(uint32_t) k >> (32 - COUNTING_SORT_BITS)];
+		case 4: ++counters[k << 24 >> (64 - COUNTING_SORT_BITS)];
+		case 3: ++counters[k << 16 >> (64 - COUNTING_SORT_BITS)];
+		case 2: ++counters[k << 8 >> (64 - COUNTING_SORT_BITS)];
+		case 1: ++counters[k >> (64 - COUNTING_SORT_BITS)];
+		default:
+			break;
+		}
 #undef ITER
 	}
 
@@ -307,7 +307,6 @@ void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tm
 #undef ITER
 	}
 
-	v += 5;
 	uint32_t prev_i = 0;
 	for (uint32_t i0 = 0; i0 < (1 << COUNTING_SORT_BITS); ++i0) {
 		const uint32_t i = counters2[i0] + 1;
