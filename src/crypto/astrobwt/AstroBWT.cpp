@@ -38,6 +38,11 @@ constexpr int COUNTING_SORT_SIZE = 1 << COUNTING_SORT_BITS;
 
 static bool astrobwtInitialized = false;
 
+
+constexpr int bucket_size = 256*11*6;
+constexpr __m256i bucket_offsets = _mm256_set_epi64x(0, bucket_size, bucket_size*2, bucket_size*3);
+
+
 #ifdef ASTROBWT_AVX2
 static bool hasAVX2 = false;
 
