@@ -30,6 +30,12 @@
 #include <limits>
 
 
+#include <emmintrin.h>
+#include <immintrin.h>
+#include <smmintrin.h>
+#include <tmmintrin.h>
+
+
 constexpr int STAGE1_SIZE = 147253;
 constexpr int ALLOCATION_SIZE = (STAGE1_SIZE + 1048576) + (128 - (STAGE1_SIZE & 63));
 
@@ -39,9 +45,13 @@ constexpr int COUNTING_SORT_SIZE = 1 << COUNTING_SORT_BITS;
 static bool astrobwtInitialized = false;
 
 
-constexpr int bucket_size = 256*11*6;
-constexpr __m256i bucket_offsets = _mm256_set_epi64x(0, bucket_size, bucket_size*2, bucket_size*3);
+constexpr int ITEM_SIZE = 6, ITEMS_PER_BUCKET = 256*11;
+constexpr int bucket_size = ITEMS_PER_BUCKET*ITEM_SIZE;
+const __m256i bucket_0123 = _mm256_set_epi64x(bucket_size*3, bucket_size*2, bucket_size, 0);
+const __m256i _4buckets = _mm256_set1_epi64x(bucket_size*4);
 
+
+#define MOVB(src, dest) asm ("movb %0, %1" : /* No outputs */ : "r" (src), "r" (dest));
 
 #ifdef ASTROBWT_AVX2
 static bool hasAVX2 = false;
@@ -220,6 +230,129 @@ void sort_indices(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp
 		}
 		prev_t = t;
 	}
+}
+
+
+inline void init128buckets(__m256i* buckets, uint64_t* indices) {
+    __m256i to_write = _mm256_set1_epi64x((uintptr_t) indices);
+	_mm256_store_si256(buckets, to_write=_mm256_add_epi64(to_write, bucket_0123));
+	#define WRITE4 _mm256_store_si256(++buckets, to_write=_mm256_add_epi64(to_write, _4buckets));
+	WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 // 32 buckets
+	WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 // 64
+	WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 // 96
+	WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 WRITE4 // 128
+	#undef WRITE4
+}
+
+void sort_indices1(uint8_t* v, uint64_t* indices, uint64_t* tmp_indices)
+{
+	uint8_t **buckets = (uint8_t**) (tmp_indices);
+	uint64_t **buckets64 = (uint64_t**) (buckets);
+	init128buckets((__m256i*) (buckets), indices);
+
+	const uint64_t *const last = (uint64_t*) (v + (STAGE1_SIZE & -4));
+	union { uint64_t *next; uint32_t *next32; };
+	next = (uint64_t *) --v;
+	// read bucket position and then advance it
+	#define READ_AND_ADVANCE(X) uint64_t *p##X = buckets64[b##X]; buckets[b##X] += ITEM_SIZE;
+    #define MOVB(src, dest) asm ("movb %0, %1" : /* No outputs */ : "r" (src), "r" (dest));
+	uint64_t b07 = bswap_64(*next); ++next32;
+	uint64_t b8b = bswap_64(*next);
+	for (union {uint64_t tmp; uint8_t tmp8;}; next <= last; ++next32, b07=b8b, b8b=bswap_64(*next)) {
+		uint8_t b4 = b07 >> 56, b2 = b07<<16 >> 56;
+		READ_AND_ADVANCE(4) forceRegister(b2);
+		READ_AND_ADVANCE(2)
+		uint8_t b1 = b07<<8 >> 56;
+		READ_AND_ADVANCE(1) uint8_t b3=b07<<24 >> 56; forceRegister(b3);
+	    READ_AND_ADVANCE(3)
+		                    tmp = b8b >> 8; MOVB(b3, tmp8)
+		*p4 = tmp;          tmp = b07;
+		*p2 = b07<<8 | b1;  MOVB((uint8_t)(b07>>56), tmp8)
+		*p1 = tmp;          tmp = b8b >>16; MOVB(b2, tmp8)
+		*p3 = tmp;
+	}
+	// constexpr int remainder = STAGE1_SIZE+1 & 3;
+	// There are 2 remaining
+	uint8_t b1 = b07<<8 >> 56;
+	READ_AND_ADVANCE(1)
+	*p1 = b07 >> 56;
+	*v++ = b1;
+
+
+
+	// uint64_t left8 = bswap_64(*next++), right8 = bswap_64(*next);
+	// for (uint64_t tmp; next++ < last; left8 = tmp) {
+	// 	// uint64_t b7 = left8 & 255, b8 = right8 >> 56;
+	// 	// READ_AND_ADVANCE(7)
+	// 	// READ_AND_ADVANCE(8)
+	// 	// uint64_t b1 = left8<< 8 >> 56, b2 = left8<<16 >> 56;
+	// 	// READ_AND_ADVANCE(1)
+	// 	// READ_AND_ADVANCE(2)
+	// 	// uint64_t b3 = left8<<24 >> 56, b4 = left8<<32 >> 56;
+	// 	// READ_AND_ADVANCE(3)
+	// 	// READ_AND_ADVANCE(4)
+	// 	// uint64_t b5 = left8<<40 >> 56, b6 = left8<<48 >> 56;
+	// 	// READ_AND_ADVANCE(5)
+	// 	// READ_AND_ADVANCE(6)
+
+	// 	// *p7 = right8>>24 <<8 | b6;
+	// 	// *p8 = right8& -256 | b7; // the high 16 bits don't matter
+	// 	// *p1 = left8& -256 | left8 >> 56;
+	// 	// *p2 = left8<< 8 | b1;
+	// 	// *p3 = left8<<16 | b8<<8 | b2;
+	// 	// *p4 = left8<<24 | right8>>48 <<8 | b3;
+	// 	// *p5 = left8<<32 | right8>>40 <<8 | b4;
+	// 	// *p6 = left8<<40 | right8>>32 <<8 | b5;
+
+	// 	uint64_t b7 = left8 & 255, b8 = right8 >> 56, b6 = left8<<48 >> 56;
+	// 	READ_AND_ADVANCE(7)
+	// 	READ_AND_ADVANCE(8)
+	// 	uint64_t b4 = left8<<32 >> 56, b5 = left8<<40 >> 56;
+	// 	READ_AND_ADVANCE(4)  *p7 = right8>>24 <<8 | b6;
+	// 	READ_AND_ADVANCE(5)  *p8 = right8>>16 <<8 | b7; // the high 16 bits don't matter
+	// 	uint64_t b3 = left8<<24 >> 56;
+	// 	READ_AND_ADVANCE(6)  *p4 = left8<<24 | right8>>48 <<8 | b3;
+	// 	READ_AND_ADVANCE(3)  *p5 = left8<<32 | right8>>40 <<8 | b4;
+	// 	uint64_t b1 = left8<< 8 >> 56, b2 = left8<<16 >> 56;
+	// 	READ_AND_ADVANCE(1)  *p6 = left8<<40 | right8>>32 <<8 | b5;
+	// 	READ_AND_ADVANCE(2)  *p3 = left8<<16 | b2 | b8<<8;
+
+    //     tmp = right8; right8 = bswap_64(*next);
+	// 	*p1 = left8& -256 | left8 >> 56;
+	// 	*p2 = left8<< 8 | b1;
+	// }
+	// // As (STAGE1_SIZE + 1) % 8 is 6, there r 6 more to go
+	// // next is now equal to last, so the last 6 r in right8
+	// // Note the last one will be sorted according to 0
+	// uint64_t b1 = right8>>48 & 255, b2 = right8>>40 & 255;
+	// READ_AND_ADVANCE(1)
+	// READ_AND_ADVANCE(2)
+	// uint64_t b3 = right8>>32 & 255, b4 = right8>>24 & 255;
+	// READ_AND_ADVANCE(3)
+	// READ_AND_ADVANCE(4)  *p1 = right8 | right8>>56;
+	// uint64_t b5 = right8>>16 & 255;
+	// READ_AND_ADVANCE(5)
+
+    // *p2 = right8<<8 | b1;
+	// *p3 = right8<<16 | b2;
+    // *p4 = b5<<40 | b3;
+	// *p5 = b4;
+
+	// // uint64_t b4 = right8>>24 & 255, b5 = 0;
+	// // READ_AND_ADVANCE(5)
+	// // READ_AND_ADVANCE(4)
+	// // uint64_t b1 = right8>>48 & 255, b2 = right8>>40 & 255;
+	// // READ_AND_ADVANCE(1)
+	// // READ_AND_ADVANCE(2)
+	// // uint64_t b3 = right8>>32 & 255;
+	// // READ_AND_ADVANCE(3)
+
+	// // *p5 = b4;
+	// // *p4 = b3;
+	// // *p1 = right8 | right8>>56;
+	// // *p2 = right8<<8 | b1;
+	// // *p3 = right8<<16 | b2;
+	#undef READ_AND_ADVANCE
 }
 
 void sort_indices2(uint32_t N, const uint8_t* v, uint64_t* indices, uint64_t* tmp_indices)
